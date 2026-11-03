@@ -2,7 +2,7 @@
 
 An LLM wiki inside your Obsidian vault. Agents read your sources and draft topics with a citation on every claim. Nothing changes until you approve the plan. Every agent you run can search the wiki, so a conversation can answer from your notes.
 
-Yami Wiki is the wiki plugin of [Yami](https://github.com/nathanaday/yami). It replaces [Almagest](https://github.com/nathanaday/obsidian-almagest), which is at its end of life.
+Yami Wiki is the wiki plugin of [Yami](https://github.com/nathanaday/yami), and lives in its own repository so that the community directory can review it. It replaces [Almagest](https://github.com/nathanaday/obsidian-almagest), which is at its end of life.
 
 ## What it does
 
@@ -20,7 +20,7 @@ You need Obsidian 1.13 or later on the desktop, and [Claude Code](https://docs.a
 1. In Obsidian, open **Settings → Community plugins** and turn off restricted mode.
 2. Select **Browse**, search for **Yami Wiki**, then select **Install** and **Enable**.
 
-Until the plugin is in the community directory, or to run a version ahead of it, install it by hand: download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/nathanaday/yami/releases?q=yami-wiki), put them in `<your vault>/.obsidian/plugins/yami-wiki/`, and turn on **Yami Wiki** under **Settings → Community plugins**. [BRAT](https://github.com/TfTHacker/obsidian42-brat) can do this for you and keep the plugin up to date.
+Until the plugin is in the community directory, or to run a version ahead of it, install it by hand: download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/nathanaday/yami-wiki/releases/latest), put them in `<your vault>/.obsidian/plugins/yami-wiki/`, and turn on **Yami Wiki** under **Settings → Community plugins**. [BRAT](https://github.com/TfTHacker/obsidian42-brat) can do this for you and keep the plugin up to date.
 
 Then run **Open the wiki panel** from the command palette, or select the book in the ribbon.
 
@@ -51,7 +51,7 @@ The agents use your own Claude Code and Codex setup: your instructions, skills, 
 
 ## With Duet and Yami Threads
 
-[Duet](https://github.com/nathanaday/obsidian-duet) is the conversation plugin: mentions and conversation notes. [Yami Threads](../yami-threads/) holds the threads workflow. Each plugin runs on its own Yami, and all three can be on in one vault: each keeps its own conversation notes, by the note's `plugin` property. The known costs of two Yami plugins in one vault are in the [library README](../../yami/README.md#two-yami-plugins-in-one-vault). Keep the plugins at the same version of `yami`.
+[Duet](https://github.com/nathanaday/obsidian-duet) is the conversation plugin: mentions and conversation notes. [Yami Threads](https://github.com/nathanaday/yami-threads) holds the threads workflow. Each plugin runs on its own Yami, and all three can be on in one vault: each keeps its own conversation notes, by the note's `plugin` property. The known costs of two Yami plugins in one vault are in the [library README](https://github.com/nathanaday/yami/blob/main/yami/README.md#two-yami-plugins-in-one-vault). Keep the plugins at the same version of `yami`.
 
 ## Network use and privacy
 
@@ -60,7 +60,7 @@ The plugin does not connect to the internet itself. It starts Claude Code or Cod
 ## Development
 
 ```sh
-npm install                 # takes yami from ../../yami; build the library first (npm run build in yami/)
+npm install                 # takes yami from the release that package.json names
 npm run dev                 # rebuilds main.js and styles.css on every change
 npm run install:vault -- /path/to/vault   # builds, and copies the plugin into the vault
 ```
@@ -74,7 +74,7 @@ For a live vault, link this folder into `.obsidian/plugins/yami-wiki` once, then
 | `npm test` | The unit tests: the version files agree, and the Hello vault module runs through a review with the library's test kit. |
 | `npm run test:obsidian` | Starts a separate Obsidian with a temporary vault, installs the built plugin, and drives it with real agents: the wiki commands, a checkout, the proposals in the panel, the hello module, conversations, the panel, and the navigator. Your own Obsidian and vaults are not touched. Build the plugin first. |
 
-Releases: see [docs/releasing.md](../../docs/releasing.md).
+To take a new library, change the URL of `yami` in `package.json` and run `npm install`. Work happens on `main`: a version bump there is a release. See [docs/releasing.md](https://github.com/nathanaday/yami/blob/main/docs/releasing.md) in the yami repository.
 
 ## License
 
