@@ -9,7 +9,9 @@ Yami Wiki is the wiki plugin of [Yami](https://github.com/nathanaday/yami), and 
 - **Ingest.** Pick a note, a file, or a folder, and the plugin captures each file as a source and starts an ingest session. The agent reads the sources in chunks, matches the subjects against the topics you have, and proposes one change plan.
 - **Approve or reject.** The wiki panel lists each plan that waits for you, with what it creates, changes, and removes, and a diff for each note. Each approval saves a version before and after, so you can restore any earlier state.
 - **Checkouts.** Ask for the material on a subject. The plugin puts a copy of each document in a folder with a reading list. Mark up the copies, and **Return this checkout** proposes your edits as one change.
-- **Search, lint, versions.** Commands to search the wiki as you type, find the notes related to the open note, lint a note or the vault, take a snapshot, list the versions, and restore one.
+- **Citations you can follow.** Rest the pointer on a citation, `([[DINOv2 (source)]], p. 3)`, and the passage it cites appears; click its title to open the source there. **Wiki: new verify** starts a session that reads each citation of the topics against its source and proposes the fixes.
+- **Sources that stay current.** When a file you ingested changes, ingest it again: the new source supersedes the old, lint names the topics that still cite the old one, and the ingest reads only what changed and moves the citations.
+- **Search, lint, versions.** Commands to search the wiki as you type, find the notes related to the open note, lint a note or the vault, take a snapshot, list the versions, and restore one. With [Ollama](https://ollama.com) on your computer, search finds notes by meaning too, with no key: see Settings.
 - **The navigator.** A sidebar that walks the wiki by its tags, where `ml/vision` is below `ml`, and follows the note you read.
 - **Sessions.** Each ingest and checkout is a session note. The panel shows its status, its promises, and its conversation, and runs it.
 
@@ -36,11 +38,19 @@ Then run **Open the wiki panel** from the command palette, or select the book in
 | **Wiki: approve this change**, **Wiki: reject this change** | With a change document open. **Wiki: approve a change** and **Wiki: reject a change** pick one from the plans that wait. |
 | **Wiki: search**, **Wiki: notes related to this note**, **Wiki: compare the algorithms**, **Wiki: match the selection** | Search and lookup. Enter opens the note, Cmd+Enter opens it in a new tab, Alt+Enter inserts a link. |
 | **Wiki: lint this note**, **Wiki: lint the vault** | The findings, errors first, each with its fix. |
+| **Wiki: new verify** | Creates a verify session. Name the topics in its `topics` field, or leave it empty for the topics most in need, and run it. It proposes one change with the fixes, and stamps each topic `verified`. |
+| **Wiki: new figures** | Creates a figures session, which draws the figures the topics mark as missing. |
 | **Wiki: take a snapshot**, **Wiki: versions**, **Wiki: restore a version** | The versions of the wiki. |
 | **Run this session with Claude**, **with Codex**, **Resume this session**, **Stop this session**, **Kill this session's agent** | With a session note open. |
 | **New module** | Writes a starter module in `internal/<name>/`, which you define in markdown. See the [Yami README](https://github.com/nathanaday/yami#bring-your-own-skills). |
 
-The agents use your own Claude Code and Codex setup: your instructions, skills, plugins, MCP servers, and permission rules. In a session, the agent gets the wiki tools (`wiki_search`, `wiki_match`, `wiki_change`, …) and the wiki skills (`/wiki:ingest`, `/wiki:checkout`).
+The agents use your own Claude Code and Codex setup: your instructions, skills, plugins, MCP servers, and permission rules. In a session, the agent gets the wiki tools (`wiki_search`, `wiki_match`, `wiki_citations`, `wiki_change`, …) and the wiki skills (`/wiki:ingest`, `/wiki:checkout`, `/wiki:verify`, …).
+
+## Settings
+
+| Setting | What it does |
+| --- | --- |
+| **Embeddings** | Off: search ranks by words. **Ollama on this computer**: search also ranks by meaning, with a model Ollama runs on your machine; install [Ollama](https://ollama.com), run `ollama pull nomic-embed-text`, and choose it. **Voyage AI, with a key**: the same through Voyage AI, which gets the text of your notes. The address, the model, and the key have fields of their own. A change takes effect at the next search; the first search embeds every note, which takes a moment. |
 
 ## What it adds to your vault
 
@@ -55,7 +65,7 @@ The agents use your own Claude Code and Codex setup: your instructions, skills, 
 
 ## Network use and privacy
 
-The plugin does not connect to the internet itself. It starts Claude Code or Codex on your computer, which send your requests and the notes they read to Anthropic or OpenAI. The plugin reads your environment variables and your home folder to find and start the agents, as a terminal does, and sends nothing anywhere. The plugin collects no data.
+The plugin does not connect to the internet itself. It starts Claude Code or Codex on your computer, which send your requests and the notes they read to Anthropic or OpenAI. With embeddings set to Ollama, it sends the text of your notes to Ollama on your own computer, at the address in the settings; with Voyage AI, to Voyage AI with your key. The plugin reads your environment variables and your home folder to find and start the agents, as a terminal does, and sends nothing anywhere. The plugin collects no data.
 
 ## Development
 
