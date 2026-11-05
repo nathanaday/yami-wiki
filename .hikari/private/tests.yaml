@@ -1,0 +1,12 @@
+version: 1
+suites:
+  all:
+    command: cd yami-wiki && npx vitest run test/unit --reporter=default --reporter=junit --outputFile=/hikari/private/reports/all.xml
+    description: Runs every unit test of the partition.
+tests:
+  yami-wiki/test/unit/settings.test.ts: ["[[embeddings-setting]]"]
+  yami-wiki/test/unit/version.test.ts: []
+  yami-wiki/test/unit/hello.test.ts: []
+gaps:
+  wiki-panel: [Only the Obsidian end-to-end suite, which is not run here, opens the panel.]
+  wiki-navigator: [Only the Obsidian end-to-end suite, which is not run here, opens the navigator.]
