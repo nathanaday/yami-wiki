@@ -107,9 +107,9 @@ describe("Yami Wiki in Obsidian", () => {
   it("searches, compares, matches, and lints the wiki from the command palette", { timeout: 60_000 }, async () => {
     await page().evaluate(async () => {
       const vault = (window as any).app.vault;
-      if (!vault.getFolderByPath("wiki/topics")) await vault.createFolder("wiki/topics");
-      await vault.create("wiki/topics/Sourdough.md", "---\ntype: topic\ndescription: Bread from a wild yeast starter.\n---\nA starter ferments. See [[Levain]].\n");
-      await vault.create("wiki/topics/Levain.md", "---\ntype: topic\ndescription: A sourdough starter.\naliases: [Starter]\n---\nThe starter of [[Sourdough]]. Also [[Nowhere]].\n");
+      if (!vault.getFolderByPath("wiki/pages")) await vault.createFolder("wiki/pages");
+      await vault.create("wiki/pages/Sourdough.md", "---\ntype: topic\ndescription: Bread from a wild yeast starter.\n---\nA starter ferments. See [[Levain]].\n");
+      await vault.create("wiki/pages/Levain.md", "---\ntype: topic\ndescription: A sourdough starter.\naliases: [Starter]\n---\nThe starter of [[Sourdough]]. Also [[Nowhere]].\n");
       await vault.create("Bakery.md", "Bread notes. See [[Sourdough]].\n");
     });
     const command = (id: string) => page().evaluate((name) => (window as any).app.commands.executeCommandById(name), id);
@@ -136,7 +136,7 @@ describe("Yami Wiki in Obsidian", () => {
     expect(await activePath()).toMatch(/^wiki\/topics\/(Levain|Sourdough)\.md$/);
 
     // Related notes start from the active note, with PPR, and list its neighbors with no query.
-    await open("wiki/topics/Levain.md");
+    await open("wiki/pages/Levain.md");
     await command("yami-wiki:yami-wiki-related");
     await page().waitForSelector(".yami-wiki-hit .yami-wiki-hit-name");
     expect(await names()).toContain("Sourdough");
@@ -168,10 +168,10 @@ describe("Yami Wiki in Obsidian", () => {
     await page().waitForSelector(".yami-wiki-badge.is-error");
     expect(await page().textContent(".yami-wiki-badge.is-error")).toBe("dead-link");
     await close();
-    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/topics/Rye.md", "---\ntype: topic\n---\nNo description.\n")));
+    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/pages/Rye.md", "---\ntype: topic\n---\nNo description.\n")));
     await command("yami-wiki:yami-wiki-lint-vault");
     await page().waitForSelector(".yami-wiki-list .yami-wiki-hit");
-    expect(await page().$$eval(".yami-wiki-list .yami-wiki-hit-meta", (els) => els.some((el) => el.textContent?.startsWith("wiki/topics/Rye.md · has no description")))).toBe(true);
+    expect(await page().$$eval(".yami-wiki-list .yami-wiki-hit-meta", (els) => els.some((el) => el.textContent?.startsWith("wiki/pages/Rye.md · has no description")))).toBe(true);
     await close();
 
     // Snapshot: the first version, its archive, and the versions list.
@@ -186,13 +186,13 @@ describe("Yami Wiki in Obsidian", () => {
     await close();
 
     // Restore: a hand edit is kept as version 2 before version 1 comes back as version 3.
-    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/topics/Spelt.md", "---\ntype: topic\ndescription: Spelt.\n---\nAdded by hand.\n")));
+    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/pages/Spelt.md", "---\ntype: topic\ndescription: Spelt.\n---\nAdded by hand.\n")));
     await command("yami-wiki:yami-wiki-restore");
     await page().locator(".yami-pick .suggestion-item", { hasText: "Version 1" }).click();
     const restored = await obsidian.waitForNote("internal/wiki/snapshots/v3.md", (text) => text.includes("restored:"), 15_000);
     expect(restored).toContain("restored: 1");
     expect(await obsidian.read("internal/wiki/snapshots/v2.md")).toContain("notes: 4");
-    expect(existsSync(path.join(obsidian.vault, "wiki/topics/Spelt.md"))).toBe(false);
+    expect(existsSync(path.join(obsidian.vault, "wiki/pages/Spelt.md"))).toBe(false);
 
     // Ingest a folder: every file of the picked folder gets a source note, and one session links them.
     await page().evaluate(async () => {
@@ -232,10 +232,10 @@ describe("Yami Wiki in Obsidian", () => {
     // A checkout made with the wiki's tool, a copy edited by the user, and the return command.
     const made = await page().evaluate(async () => {
       const app = (window as any).app;
-      if (!app.vault.getFolderByPath("wiki/topics")) await app.vault.createFolder("wiki/topics");
-      await app.vault.create("wiki/topics/Compost.md", "---\ntype: topic\ndescription: Rotted plant matter.\n---\nCompost feeds the soil.\n");
+      if (!app.vault.getFolderByPath("wiki/pages")) await app.vault.createFolder("wiki/pages");
+      await app.vault.create("wiki/pages/Compost.md", "---\ntype: topic\ndescription: Rotted plant matter.\n---\nCompost feeds the soil.\n");
       const tool = (window as any).app.plugins.plugins["yami-wiki"].yami.tools().tools.find((t: any) => t.name === "wiki_checkout");
-      return JSON.parse(await tool.run({ request: "the material on compost", name: "Compost", documents: [{ path: "wiki/topics/Compost.md", why: "the basics" }] }, { signal: new AbortController().signal }));
+      return JSON.parse(await tool.run({ request: "the material on compost", name: "Compost", documents: [{ path: "wiki/pages/Compost.md", why: "the basics" }] }, { signal: new AbortController().signal }));
     });
     expect(made.session).toMatch(/^internal\/wiki\/sessions\/\d{4}-\d{2}-\d{2} Compost\.md$/);
     expect(made.copies).toEqual([`${made.session.slice(0, -3)}/Compost (checkout).md`]);
@@ -248,7 +248,7 @@ describe("Yami Wiki in Obsidian", () => {
     expect(await page().evaluate(() => (window as any).app.commands.findCommand("yami-wiki:yami-wiki-return")?.name)).toBe("Yami Wiki: Wiki: return this checkout");
     await run("yami-wiki:yami-wiki-return");
     await obsidian.waitForNote(made.session, (text) => text.includes("status: returned"), 15_000);
-    expect(await obsidian.read("wiki/topics/Compost.md")).toContain("Compost feeds the soil and holds water.");
+    expect(await obsidian.read("wiki/pages/Compost.md")).toContain("Compost feeds the soil and holds water.");
     expect(existsSync(path.join(obsidian.vault, made.copies[0]))).toBe(false);
   });
 
@@ -258,8 +258,8 @@ describe("Yami Wiki in Obsidian", () => {
       const app = (window as any).app;
       if (!app.vault.getFolderByPath("Papers")) await app.vault.createFolder("Papers");
       await app.vault.create("Papers/Kefir.md", "# Kefir\n\nFermented milk.\n");
-      if (!app.vault.getFolderByPath("wiki/topics")) await app.vault.createFolder("wiki/topics");
-      await app.vault.create("wiki/topics/Yogurt.md", "---\ntype: topic\ndescription: Cultured milk.\n---\nYogurt is cultured milk.\n");
+      if (!app.vault.getFolderByPath("wiki/pages")) await app.vault.createFolder("wiki/pages");
+      await app.vault.create("wiki/pages/Yogurt.md", "---\ntype: topic\ndescription: Cultured milk.\n---\nYogurt is cultured milk.\n");
       return ((await (window as any).app.plugins.plugins["yami-wiki"].yami.ingest({ files: ["Papers/Kefir.md"], name: "Ingest Kefir" })) as { path: string }).path;
     });
     const propose = (title: string, writes: Record<string, unknown>[]) =>
@@ -279,8 +279,8 @@ describe("Yami Wiki in Obsidian", () => {
     const acts = () => page().$$eval(".yami-panel .yami-action", (els) => els.map((el) => el.textContent));
 
     const first = await propose("Learn kefir", [
-      { op: "create", path: "wiki/topics/Kefir.md", properties: { description: "Fermented milk with grains." }, body: "Kefir is fermented milk. See [[Yogurt]].", why: "the paper's subject" },
-      { op: "modify", path: "wiki/topics/Yogurt.md", body: "Yogurt is cultured milk. Kefir is its cousin.", why: "names the cousin" },
+      { op: "create", path: "wiki/pages/Kefir.md", properties: { description: "Fermented milk with grains." }, body: "Kefir is fermented milk. See [[Yogurt]].", why: "the paper's subject" },
+      { op: "modify", path: "wiki/pages/Yogurt.md", body: "Yogurt is cultured milk. Kefir is its cousin.", why: "names the cousin" },
     ]);
     expect(first).toMatchObject({ status: "proposed", creates: 1, modifies: 1, removes: 0 });
 
@@ -325,8 +325,8 @@ describe("Yami Wiki in Obsidian", () => {
     expect(await heads()).toEqual(["Notes", "Created", "Changed"]);
     expect(await page().$$eval(".yami-panel .yami-write .yami-row-note", (els) => els.map((el) => el.textContent))).toEqual(["Done", "Done"]);
     expect(await acts()).toEqual([]);
-    expect(await obsidian.read("wiki/topics/Kefir.md")).toContain("Kefir is fermented milk.");
-    expect(await obsidian.read("wiki/topics/Yogurt.md")).toContain("Kefir is its cousin.");
+    expect(await obsidian.read("wiki/pages/Kefir.md")).toContain("Kefir is fermented milk.");
+    expect(await obsidian.read("wiki/pages/Yogurt.md")).toContain("Kefir is its cousin.");
     expect(await obsidian.read(first.path)).toContain("status: applied");
     await page().keyboard.press("Backspace");
     await page().waitForSelector('.yami-panel .yami-panel-title:text-is("Wiki")');
@@ -334,7 +334,7 @@ describe("Yami Wiki in Obsidian", () => {
     expect(await page().textContent(".yami-panel .yami-waiting .yami-panel-empty")).toBe("Nothing waits for approval.");
 
     // Reject, with a reason: the prompt is the library's, and the document records the reason.
-    const second = await propose("Learn kefir grains", [{ op: "create", path: "wiki/topics/Kefir grains.md", properties: { description: "The grains." }, body: "Grains.", why: "thin" }]);
+    const second = await propose("Learn kefir grains", [{ op: "create", path: "wiki/pages/Kefir grains.md", properties: { description: "The grains." }, body: "Grains.", why: "thin" }]);
     const row2 = `.yami-panel [data-key="change:${second.path}"]`;
     await page().waitForSelector(row2, { timeout: 10_000 });
     await page().click(row2);
@@ -355,13 +355,13 @@ describe("Yami Wiki in Obsidian", () => {
     expect(await page().textContent(".yami-panel .yami-state-label")).toBe("Rejected");
     expect(await acts()).toEqual([]);
     expect(await obsidian.read(second.path)).toContain("reason: Too thin.");
-    expect(existsSync(path.join(obsidian.vault, "wiki/topics/Kefir grains.md"))).toBe(false);
+    expect(existsSync(path.join(obsidian.vault, "wiki/pages/Kefir grains.md"))).toBe(false);
     await page().click(".yami-panel .yami-back");
     await page().waitForSelector('.yami-panel .yami-panel-title:text-is("Wiki")');
 
     // A plan that no longer fits, since the note it creates appeared: the refusal shows inline, and the change stays proposed.
-    const third = await propose("Learn loam", [{ op: "create", path: "wiki/topics/Loam.md", properties: { description: "Loam." }, body: "Loam.", why: "x" }]);
-    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/topics/Loam.md", "---\ntype: topic\ndescription: Taken.\n---\nTaken.\n")));
+    const third = await propose("Learn loam", [{ op: "create", path: "wiki/pages/Loam.md", properties: { description: "Loam." }, body: "Loam.", why: "x" }]);
+    await page().evaluate(async () => void (await (window as any).app.vault.create("wiki/pages/Loam.md", "---\ntype: topic\ndescription: Taken.\n---\nTaken.\n")));
     const row3 = `.yami-panel [data-key="change:${third.path}"]`;
     await page().waitForSelector(row3, { timeout: 10_000 });
     await page().click(row3);
@@ -381,11 +381,11 @@ describe("Yami Wiki in Obsidian", () => {
     await page().waitForSelector(".yami-ask", { timeout: 5_000 });
     await page().locator(".yami-ask .suggestion-item", { hasText: "Reject the change with no reason" }).click();
     await obsidian.waitForNote(third.path, (text) => text.includes("status: rejected"), 15_000);
-    const fourth = await propose("Learn whey", [{ op: "create", path: "wiki/topics/Whey.md", properties: { description: "Whey." }, body: "Whey is the liquid.", why: "x" }]);
+    const fourth = await propose("Learn whey", [{ op: "create", path: "wiki/pages/Whey.md", properties: { description: "Whey." }, body: "Whey is the liquid.", why: "x" }]);
     await open(fourth.path);
     await run("yami-wiki:yami-wiki-approve-this-change");
     await obsidian.waitForNote(fourth.path, (text) => text.includes("status: applied"), 15_000);
-    expect(await obsidian.read("wiki/topics/Whey.md")).toContain("Whey is the liquid.");
+    expect(await obsidian.read("wiki/pages/Whey.md")).toContain("Whey is the liquid.");
 
     // Nothing waits any more: the list says so, and the badge is gone.
     await page().evaluate(() => (window as any).app.workspace.getLeavesOfType("yami-panel")[0].view.go({ level: "modules" }));
@@ -429,6 +429,38 @@ describe("Yami Wiki in Obsidian", () => {
       return Boolean(commands["yami-wiki:yami-hello-new-greeting"]) && !commands["yami-wiki:yami-hello-new-task"];
     }, undefined, { timeout: 10_000 });
     expect(await page().$$(".yami-panel .yami-problem-row")).toHaveLength(0);
+  });
+
+  it("makes a page from a template, and a template of the person's own that the next page can use", { timeout: 60_000 }, async () => {
+    await obsidian.waitForNote("internal/wiki/templates/event/TEMPLATE.md", (text) => text.includes("name: event"), 10_000);
+    const answer = async (placeholder: string, text: string, hint: string) => {
+      await page().waitForSelector(".yami-ask", { timeout: 5_000 });
+      expect(await page().getAttribute(".yami-ask input.prompt-input", "placeholder")).toBe(placeholder);
+      await page().locator(".yami-ask input.prompt-input").fill(text);
+      await page().locator(".yami-ask .suggestion-item", { hasText: `${hint}: ${text}` }).click();
+      await page().waitForSelector(".yami-ask", { state: "detached", timeout: 5_000 });
+    };
+
+    await run("yami-wiki:yami-wiki-new-page");
+    await page().waitForSelector(".yami-pick .suggestion-item");
+    expect(await page().getAttribute(".yami-pick input.prompt-input", "placeholder")).toBe("The template of the new page");
+    await page().locator(".yami-pick .suggestion-item", { hasText: /^event · / }).click();
+    await answer("The name of the new page, which is its title", "Harvest fair 2026", "Create the event");
+    await answer("One sentence on what its subject is", "The village's harvest fair of 2026.", "Create Harvest fair 2026");
+    await page().waitForFunction(() => (window as any).app.workspace.getActiveFile()?.path === "wiki/pages/Harvest fair 2026.md", undefined, { timeout: 10_000 });
+    const fair = await obsidian.read("wiki/pages/Harvest fair 2026.md");
+    expect(fair).toContain("type: event");
+    expect(fair).toContain("## Summary\n\n## Proceedings\n");
+    expect(readdirSync(path.join(obsidian.vault, "internal/wiki/changes")).some((file) => file.endsWith("New page Harvest fair 2026.md"))).toBe(true);
+
+    await run("yami-wiki:yami-wiki-new-template");
+    await answer("The name of the new template, such as person", "recipe", "Create the template");
+    await page().waitForFunction(() => (window as any).app.workspace.getActiveFile()?.path === "internal/wiki/templates/recipe/TEMPLATE.md", undefined, { timeout: 10_000 });
+    await run("yami-wiki:yami-wiki-new-page");
+    await page().waitForSelector(".yami-pick .suggestion-item");
+    expect(await page().$$eval(".yami-pick .suggestion-item", (els) => els.map((el) => el.textContent?.split(" · ")[0]))).toContain("recipe");
+    await page().keyboard.press("Escape");
+    await page().waitForSelector(".yami-pick", { state: "detached", timeout: 5_000 });
   });
 
   it("adds no conversation commands: conversations are Duet's", async () => {

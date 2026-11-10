@@ -123,7 +123,7 @@ export class WikiSettingTab extends PluginSettingTab {
         items: [
           {
             name: "Wiki folder",
-            desc: "Where the topics and the sources are, for you to read. Any folder of the vault, such as library/wiki.",
+            desc: "Where the pages and the sources are, for you to read. Any folder of the vault, such as library/wiki.",
             control: { type: "text", key: "wikiFolder", placeholder: "wiki" },
             visible: () => !this.#moved,
           },
