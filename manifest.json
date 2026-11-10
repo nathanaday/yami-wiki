@@ -1,7 +1,7 @@
 {
   "id": "yami-wiki",
   "name": "Yami Wiki",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "1.13.0",
   "description": "An LLM wiki in your vault: agents ingest sources into cited topics, you approve each change, and every agent can search your notes.",
   "author": "nathanaday",
