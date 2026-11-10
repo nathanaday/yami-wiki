@@ -152,9 +152,9 @@ export class WikiSettingTab extends PluginSettingTab {
     try {
       await this.plugin.yami.moveFolders(this.#folders);
       this.#moved = true;
-      new Notice("Yami Wiki: the folders moved. Reload Obsidian so every Yami plugin uses them.", 10_000);
+      new Notice("The folders moved. Reload Obsidian so that every plugin uses them.", 10_000);
     } catch (error) {
-      new Notice(`Yami Wiki: ${error instanceof Error ? error.message : String(error)}`, 10_000);
+      new Notice(`The folders did not move: ${error instanceof Error ? error.message : String(error)}`, 10_000);
     }
     this.update();
   }
