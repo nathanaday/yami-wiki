@@ -1,6 +1,6 @@
 # Yami Wiki
 
-An LLM wiki inside your Obsidian vault. Agents read your sources and draft topics with a citation on every claim. Nothing changes until you approve the plan. Every agent you run can search the wiki, so a conversation can answer from your notes.
+An LLM wiki inside your Obsidian vault. Agents read your sources and draft topics with a citation on every claim. Nothing changes until you approve the plan.
 
 Yami Wiki is the wiki plugin of [Yami](https://github.com/nathanaday/yami), and lives in its own repository so that the community directory can review it. It replaces [Almagest](https://github.com/nathanaday/obsidian-almagest), which is at its end of life.
 
@@ -13,7 +13,13 @@ Yami Wiki is the wiki plugin of [Yami](https://github.com/nathanaday/yami), and 
 - **Sources that stay current.** When a file you ingested changes, ingest it again: the new source supersedes the old, lint names the topics that still cite the old one, and the ingest reads only what changed and moves the citations.
 - **Search, lint, versions.** Commands to search the wiki as you type, find the notes related to the open note, lint a note or the vault, take a snapshot, list the versions, and restore one. With [Ollama](https://ollama.com) on your computer, search finds notes by meaning too, with no key: see Settings.
 - **The navigator.** A sidebar that walks the wiki by its tags, where `ml/vision` is below `ml`, and follows the note you read.
-- **Sessions.** Each ingest and checkout is a session note. The panel shows its status, its promises, and its conversation, and runs it.
+- **Sessions.** Each ingest and checkout is a session note. The panel shows its status, its promises, and the record of its run, and runs it.
+
+Yami Wiki has no conversations of its own. An agent works on the wiki in one of three ways:
+
+- **A command.** Run an ingest, a checkout, a verify, or a figures session from the command palette (Cmd+P or Ctrl+P), as the table below lists.
+- **[Duet](https://github.com/nathanaday/obsidian-duet)**, the conversation plugin. Its agents have the wiki tools and skills, so a conversation in a note can answer from the wiki or start an ingest.
+- **[Yami Wiki for Claude Code and Codex](https://github.com/nathanaday/yami-wiki-agent-plugin)**, which gives the wiki tools and skills to an agent outside the vault.
 
 ## Install
 
@@ -62,7 +68,7 @@ The agents use your own Claude Code and Codex setup: your instructions, skills, 
 
 ## With Duet and Yami Threads
 
-[Duet](https://github.com/nathanaday/obsidian-duet) is the conversation plugin: mentions and conversation notes. [Yami Threads](https://github.com/nathanaday/yami-threads) holds the threads workflow. Each plugin runs on its own Yami, and all three can be on in one vault: each keeps its own conversation notes, by the note's `plugin` property. The known costs of two Yami plugins in one vault are in the [library README](https://github.com/nathanaday/yami/blob/main/yami/README.md#two-yami-plugins-in-one-vault). Keep the plugins at the same version of `yami`.
+[Duet](https://github.com/nathanaday/obsidian-duet) is the conversation plugin: mentions and conversation notes. Yami Wiki leaves conversations to it and adds no conversation commands. [Yami Threads](https://github.com/nathanaday/yami-threads) holds the threads workflow. Each plugin runs on its own Yami, and all three can be on in one vault: the notes that record a session's run stay with the plugin that ran it, by the note's `plugin` property. The known costs of two Yami plugins in one vault are in the [library README](https://github.com/nathanaday/yami/blob/main/yami/README.md#two-yami-plugins-in-one-vault). Keep the plugins at the same version of `yami`.
 
 ## Network use and privacy
 
@@ -83,7 +89,7 @@ For a live vault, link this folder into `.obsidian/plugins/yami-wiki` once, then
 | `npm run build` | Type-checks the plugin and its tests, and writes a minified `main.js` and `styles.css`. |
 | `npm run lint` | Runs Obsidian's review rules, as the community scan runs them, with no warning allowed. |
 | `npm test` | The unit tests: the version files agree, and the Hello vault module runs through a review with the library's test kit. |
-| `npm run test:obsidian` | Starts a separate Obsidian with a temporary vault, installs the built plugin, and drives it with real agents: the wiki commands, a checkout, the proposals in the panel, the hello module, conversations, the panel, and the navigator. Your own Obsidian and vaults are not touched. Build the plugin first. |
+| `npm run test:obsidian` | Starts a separate Obsidian with a temporary vault, installs the built plugin, and drives it with real agents: the wiki commands, a checkout, the proposals in the panel, the hello module, the runs of sessions, the panel, and the navigator. Your own Obsidian and vaults are not touched. Build the plugin first. |
 
 To take a new library, change the URL of `yami` in `package.json` and run `npm install`. Work happens on `main`: a version bump there is a release. See [docs/releasing.md](https://github.com/nathanaday/yami/blob/main/docs/releasing.md) in the yami repository.
 
