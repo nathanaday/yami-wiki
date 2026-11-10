@@ -6,8 +6,8 @@ import { defaultAlgorithm, embedderOf, upgradeSettings, WikiSettingTab, type Wik
 
 /**
  * The wiki plugin: the library's wiki module, with the panel and the navigator over it. Threads is left to
- * the threads plugin, and the conversation commands to Duet when it is on; this plugin still runs its own
- * agents for the wiki's sessions. `app.plugins.getPlugin("yami-wiki").yami` is the Yami, for the console.
+ * the threads plugin, and conversations to Duet; this plugin runs its own agents only for the wiki's
+ * sessions, which a command starts. `app.plugins.getPlugin("yami-wiki").yami` is the Yami, for the console.
  */
 export default class YamiWikiPlugin extends Plugin {
   yami!: ObsidianYami;
@@ -18,6 +18,7 @@ export default class YamiWikiPlugin extends Plugin {
     this.yami = createYami(this, {
       agents: [new ClaudeAgent(), new CodexAgent()],
       threads: false,
+      commands: { conversations: false },
       // The default algorithm follows the setting: hybrid once an embedder is on, so a changed setting needs no reload.
       wiki: { embedder: embedderOf(this.settings), defaultAlgorithm: () => defaultAlgorithm(this.settings) },
     });

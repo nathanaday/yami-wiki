@@ -1,6 +1,6 @@
 # Yami Wiki
 
-An LLM wiki inside your Obsidian vault. You hand it papers, slides, and notes; agents read them and draft topics in which every claim cites its source. Nothing in the wiki changes until you approve the plan, and every agent the plugin starts can search the wiki, so a conversation answers from your own notes with citations you can check.
+An LLM wiki inside your Obsidian vault. You hand it papers, slides, and notes; agents read them and draft topics in which every claim cites its source. Nothing in the wiki changes until you approve the plan.
 
 Yami Wiki runs on the [yami](https://github.com/nathanaday/yami) library and replaces the [Almagest plugin](https://github.com/nathanaday/obsidian-almagest), which is at its end of life. To give the same wiki to Claude Code or Codex outside Obsidian, use [Yami Wiki for Claude Code and Codex](https://github.com/nathanaday/yami-wiki-agent-plugin).
 
@@ -14,6 +14,12 @@ Yami Wiki runs on the [yami](https://github.com/nathanaday/yami) library and rep
 - **Checkouts.** Ask for the material on a subject and get a reading list with a copy of each document. Mark up the copies, and returning the checkout applies your edits as one change.
 - **The navigator.** A sidebar that walks the wiki by its tags (`ml/vision` sits below `ml`) and follows the note you have open.
 - **Bundles and figures.** Export the topics around a subject for another vault, import a bundle, and have an agent draw the figures that topics mark as missing.
+
+Yami Wiki has no conversations of its own. An agent works on the wiki in one of three ways:
+
+- **A command.** Run an ingest, a checkout, a verify, or a figures session from the command palette (Cmd+P or Ctrl+P), as [Commands](#commands) lists.
+- **[Duet](https://github.com/nathanaday/obsidian-duet)**, the conversation plugin. Its agents have the wiki tools and skills, so a conversation in a note can answer from the wiki, with citations you can check, or start an ingest.
+- **[Yami Wiki for Claude Code and Codex](https://github.com/nathanaday/yami-wiki-agent-plugin)**, which gives the wiki tools and skills to an agent outside the vault.
 
 ## Requirements
 
@@ -37,7 +43,7 @@ Yami Wiki is not in the community plugin directory yet. Install it from a releas
 1. Open a note or a PDF you want the wiki to learn from, and run **Wiki: ingest this file** from the command palette. The plugin creates an ingest session and opens it.
 2. Run **Run this session with Claude** (or **with Codex**). The agent reads the source, drafts topics, and stops once it has proposed a change plan.
 3. Select the book icon in the ribbon to open the wiki panel. Read the plan and its diffs, then approve or reject it. On approval, the topics appear in `wiki/topics/` and the source in `wiki/sources/`.
-4. Run **New conversation with claude** and ask a question about the source. The agent searches the wiki and answers with citations.
+4. To ask a question about the source, start a conversation in [Duet](https://github.com/nathanaday/obsidian-duet), or ask Claude Code or Codex with [Yami Wiki for Claude Code and Codex](https://github.com/nathanaday/yami-wiki-agent-plugin). The agent searches the wiki and answers with citations.
 
 ## Commands
 
@@ -54,9 +60,8 @@ Yami Wiki is not in the community plugin directory yet. Install it from a releas
 | **Wiki: export a topic**, **Wiki: import a bundle** | Write the topics around a subject, with their sources, to a folder; read such a folder, a path, or a GitHub URL back in. |
 | **Wiki: take a snapshot**, **Wiki: versions**, **Wiki: restore a version**, **Wiki: rebuild the index** | Manage the versions of the wiki and its search index. |
 | **Run this session with Claude** (or **with Codex**), **Resume this session**, **Stop this session**, **Kill this session's agent** | Control the session note you have open. |
-| **New conversation with claude** (or **with codex**), **End this conversation**, **Stop the agent in this note**, **Undo the agent's last changes in this note** | Talk with an agent in a conversation note. |
 | **Protect the selected text**, **Unprotect the selected text**, **Toggle editing of protected text** | Mark text that no agent may change. |
-| **New module** | Create a module of your own, defined in markdown under `internal/<name>/`. See [Bring Your Own Skills](https://github.com/nathanaday/yami#bring-your-own-skills). |
+| **New module** | Create a module of your own, defined in markdown in the internal folder, `internal/<name>/`. See [Bring Your Own Skills](https://github.com/nathanaday/yami#bring-your-own-skills). |
 
 Inside a session, the agent gets the wiki tools (`wiki_search`, `wiki_match`, `wiki_citations`, `wiki_change`, and more) and the wiki skills (`/wiki:ingest`, `/wiki:checkout`, `/wiki:verify`, and more).
 
@@ -67,17 +72,20 @@ Inside a session, the agent gets the wiki tools (`wiki_search`, `wiki_match`, `w
 | **Embeddings** | **Off** (the default): search ranks by words. **Ollama on this computer**: search also ranks by meaning, with a model Ollama runs locally and no key; install Ollama and run `ollama pull nomic-embed-text`. **Voyage AI, with a key**: the same through Voyage AI, which receives the text of your notes. |
 | **Ollama address**, **Ollama model** | Where Ollama listens (default `http://localhost:11434`) and which embedding model to use (default `nomic-embed-text`). Changing the model embeds every note again. |
 | **Voyage AI key**, **Voyage AI model** | Your key, stored in the plugin's data file in the vault's configuration folder, and the model (default `voyage-3.5`). |
+| **Wiki folder**, **Internal folder** | Where the wiki is (default `wiki`), and where the modules keep what they need (default `internal`). Type another folder, such as `library/wiki`, and choose **Move the folders**. |
 
-A change takes effect at the next search. The setting tab shows a status line, with the error when the last search could not embed.
+A change of the embeddings takes effect at the next search. The setting tab shows a status line, with the error when the last search could not embed.
+
+**Move the folders** moves them with every link into them, and then you reload Obsidian. A folder whose name starts with a dot is refused, because Obsidian hides it and its notes and links would stop working. The choice is kept in `.yami.json` at the vault's root, so Duet, Yami Threads, and Yami Wiki for Claude Code and Codex use the same folders. A change plan that waits for approval holds the wiki in place until you approve or reject it.
 
 ## What It Adds to Your Vault
 
 - `wiki/topics/` and `wiki/sources/`: the wiki itself, for you to read.
 - `internal/wiki/`: the sessions, change notes, versions, frozen copies of the sources, and the policies, skills, and agents the sessions use. `internal/wiki/sessions.base` lists them.
-- `conversations/`: a note for each agent run.
-- `Yami.base`, which lists the modules and their sessions, and `internal/yami/skills/run/SKILL.md`, the skill every run starts with.
+- `conversations/`: a note that records each run of a session.
+- `internal/yami/skills/run/SKILL.md`, the skill every run starts with.
 
-The plugin never overwrites a file you edited. It also colors `wiki/` cyan and `internal/` gray in the file explorer, and adds a status bar item that shows which agents are working.
+These are the default folders; the **Wiki folder** and **Internal folder** settings move them. Nothing is written at the vault's root, except `.yami.json` once you move a folder. The plugin never overwrites a file you edited. It also colors the wiki's folder cyan and the internal folder gray in the file explorer, and adds a status bar item that shows which agents are working.
 
 ## Network Use and Privacy
 
@@ -85,7 +93,7 @@ The plugin starts Claude Code or Codex on your computer, and they send your requ
 
 ## With Duet and Yami Threads
 
-[Duet](https://github.com/nathanaday/obsidian-duet) adds conversations with mentions in your notes, and [Yami Threads](https://github.com/nathanaday/yami-threads) carries work on your repositories from an idea to a validated close. All three can run in one vault. Each runs its own agents and keeps its own conversation notes. Keep them on the same version of `yami`, or the older plugin reports the newer shared files as your edits. The [library README](https://github.com/nathanaday/yami/blob/main/yami/README.md#two-yami-plugins-in-one-vault) lists what else to know.
+[Duet](https://github.com/nathanaday/obsidian-duet) adds conversations with mentions in your notes; Yami Wiki leaves conversations to it. [Yami Threads](https://github.com/nathanaday/yami-threads) carries work on your repositories from an idea to a validated close. All three can run in one vault. Each runs its own agents, and the notes that record a run stay with the plugin that ran it. Keep them on the same version of `yami`, or the older plugin reports the newer shared files as your edits. The [library README](https://github.com/nathanaday/yami/blob/main/yami/README.md#two-yami-plugins-in-one-vault) lists what else to know.
 
 ## Development
 

@@ -1,0 +1,20 @@
+version: 1
+parts:
+  - path: yami-wiki/src/main.ts
+    description: Plugin entry; creates the Yami, registers views, commands, and the settings tab.
+  - path: yami-wiki/scripts/
+    description: Version bump script.
+  - path: yami-wiki/test/
+    description: Unit tests, Obsidian end-to-end tests, and fixtures.
+  - path: yami-wiki/esbuild.config.mjs
+    description: Bundler.
+features:
+  wiki-panel:
+    code: [yami-wiki/src/main.ts]
+    notes: onload registers PANEL_VIEW, the ribbon icon, and the open-panel command; agents are Claude and Codex, threads off.
+  wiki-navigator:
+    code: [yami-wiki/src/main.ts]
+    notes: registers NAVIGATOR_VIEW and the open-wiki-navigator command.
+  embeddings-setting:
+    code: [yami-wiki/src/settings.ts, yami-wiki/src/main.ts]
+    notes: embedderOf and defaultAlgorithm choose the embedder; saveSettings calls wiki.setEmbedder.

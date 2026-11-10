@@ -1,4 +1,5 @@
-import { type App, PluginSettingTab, type SettingDefinitionItem } from "obsidian";
+import { type App, Notice, PluginSettingTab, type SettingDefinitionItem } from "obsidian";
+import { folderProblem, normalizeFolder, type FolderSettings } from "yami/document";
 import { OllamaEmbedder, VoyageEmbedder, type Embedder } from "yami/wiki";
 import type YamiWikiPlugin from "./main.js";
 
@@ -43,6 +44,20 @@ export function defaultAlgorithm(settings: WikiSettings): string {
   return embedderOf(settings) ? "hybrid" : "bm25";
 }
 
+/**
+ * What a move from the folders now to the ones typed would do: nothing, a problem with them, or the moves.
+ * The folders live in the vault's `.yami.json`, not in this plugin's data, so every Yami plugin and the agent
+ * plugin read the same ones.
+ */
+export function folderMove(current: FolderSettings, typed: FolderSettings): { problem?: string; moves: string[] } {
+  const problem = folderProblem(typed);
+  if (problem) return { problem, moves: [] };
+  const moves = (["wiki", "internal"] as const)
+    .filter((key) => normalizeFolder(typed[key]) !== current[key])
+    .map((key) => `${current[key]}/ to ${normalizeFolder(typed[key])}/`);
+  return { moves };
+}
+
 const EMBEDDINGS: Record<Embeddings, string> = {
   off: "Off: search by words alone",
   ollama: "Ollama on this computer",
@@ -50,16 +65,24 @@ const EMBEDDINGS: Record<Embeddings, string> = {
 };
 
 export class WikiSettingTab extends PluginSettingTab {
+  /** The folders typed in the tab, which move only when the person asks. */
+  #folders: FolderSettings;
+  /** Whether the folders moved since the plugin loaded, so the plugin waits for a reload. */
+  #moved = false;
+
   constructor(
     app: App,
     private readonly plugin: YamiWikiPlugin,
   ) {
     super(app, plugin);
+    this.#folders = plugin.yami.vault.folders.settings;
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
     const { settings } = this.plugin;
     const problem = this.plugin.yami.wiki.embedderProblem;
+    const current = this.plugin.yami.vault.folders.settings;
+    const move = folderMove(current, this.#folders);
     return [
       {
         name: "Embeddings",
@@ -94,14 +117,60 @@ export class WikiSettingTab extends PluginSettingTab {
         desc: problem ? `The last search could not embed: ${problem}` : settings.embeddings === "off" ? "Search ranks by words." : "Search ranks by words and by meaning, with the hybrid algorithm.",
         searchable: false,
       },
+      {
+        type: "group",
+        heading: "Folders",
+        items: [
+          {
+            name: "Wiki folder",
+            desc: "Where the topics and the sources are, for you to read. Any folder of the vault, such as library/wiki.",
+            control: { type: "text", key: "wikiFolder", placeholder: "wiki" },
+            visible: () => !this.#moved,
+          },
+          {
+            name: "Internal folder",
+            desc: "Where the modules keep what they need: skills, agents, sessions, change plans, versions, and the originals of the sources.",
+            control: { type: "text", key: "internalFolder", placeholder: "internal" },
+            visible: () => !this.#moved,
+          },
+          {
+            name: this.#moved ? "Reload Obsidian" : "Move the folders",
+            desc: this.#moved
+              ? "The folders moved. Reload Obsidian (Reload app without saving, in the command palette) so every Yami plugin uses them."
+              : (move.problem ?? `Moves ${move.moves.join(", and ")}, with every link into them. Every Yami plugin of the vault and the Yami Wiki plugin for Claude Code and Codex read the folders from .yami.json at the vault's root.`),
+            visible: () => this.#moved || move.problem !== undefined || move.moves.length > 0,
+            disabled: () => this.#moved || move.problem !== undefined,
+            action: () => void this.moveFolders(),
+          },
+        ],
+      },
     ];
   }
 
+  /** Moves the folders to the ones typed, then waits for a reload. */
+  private async moveFolders(): Promise<void> {
+    try {
+      await this.plugin.yami.moveFolders(this.#folders);
+      this.#moved = true;
+      new Notice("The folders moved. Reload Obsidian so that every plugin uses them.", 10_000);
+    } catch (error) {
+      new Notice(`The folders did not move: ${error instanceof Error ? error.message : String(error)}`, 10_000);
+    }
+    this.update();
+  }
+
   getControlValue(key: string): unknown {
+    if (key === "wikiFolder") return this.#folders.wiki;
+    if (key === "internalFolder") return this.#folders.internal;
     return this.plugin.settings[key as keyof WikiSettings];
   }
 
   async setControlValue(key: string, value: unknown): Promise<void> {
+    if (key === "wikiFolder" || key === "internalFolder") {
+      this.#folders = { ...this.#folders, [key === "wikiFolder" ? "wiki" : "internal"]: String(value) };
+      this.update();
+      return;
+    }
     const { settings } = this.plugin;
     if (key === "embeddings") settings.embeddings = value as Embeddings;
     else if (key === "ollamaHost" || key === "ollamaModel" || key === "voyageKey" || key === "voyageModel") settings[key] = String(value).trim();
