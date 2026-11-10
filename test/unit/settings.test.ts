@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 // The obsidian package is types alone; the tab's base class is a stand-in here.
-vi.mock("obsidian", () => ({ PluginSettingTab: class {} }));
+vi.mock("obsidian", () => ({ Notice: class {}, PluginSettingTab: class {} }));
 
 import { OllamaEmbedder, VoyageEmbedder } from "yami/wiki";
-import { DEFAULT_SETTINGS, defaultAlgorithm, embedderOf, upgradeSettings } from "../../src/settings.js";
+import { DEFAULT_SETTINGS, defaultAlgorithm, embedderOf, folderMove, upgradeSettings } from "../../src/settings.js";
 
 describe("the embeddings setting", () => {
   it("fills in what an older plugin did not save, and refuses a value it does not know", () => {
@@ -26,5 +26,19 @@ describe("the embeddings setting", () => {
     const voyage = embedderOf({ ...DEFAULT_SETTINGS, embeddings: "voyage", voyageKey: "pa-x" });
     expect(voyage).toBeInstanceOf(VoyageEmbedder);
     expect(voyage).toMatchObject({ id: "voyage:voyage-3.5" });
+  });
+});
+
+describe("the folders setting", () => {
+  const current = { internal: "internal", wiki: "wiki" };
+
+  it("says nothing moves for the folders as they are, and what moves for others", () => {
+    expect(folderMove(current, { internal: "internal", wiki: " wiki/ " })).toEqual({ moves: [] });
+    expect(folderMove(current, { internal: "system", wiki: "library/wiki" })).toEqual({ moves: ["wiki/ to library/wiki/", "internal/ to system/"] });
+  });
+
+  it("refuses a hidden folder and folders that overlap", () => {
+    expect(folderMove(current, { internal: ".internal", wiki: "wiki" }).problem).toMatch(/Obsidian hides a folder/);
+    expect(folderMove(current, { internal: "library", wiki: "library/wiki" }).problem).toMatch(/must be apart/);
   });
 });

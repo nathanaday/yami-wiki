@@ -42,7 +42,7 @@ Then run **Open the wiki panel** from the command palette, or select the book in
 | **Wiki: new figures** | Creates a figures session, which draws the figures the topics mark as missing. |
 | **Wiki: take a snapshot**, **Wiki: versions**, **Wiki: restore a version** | The versions of the wiki. |
 | **Run this session with Claude**, **with Codex**, **Resume this session**, **Stop this session**, **Kill this session's agent** | With a session note open. |
-| **New module** | Writes a starter module in `internal/<name>/`, which you define in markdown. See the [Yami README](https://github.com/nathanaday/yami#bring-your-own-skills). |
+| **New module** | Writes a starter module in the internal folder, `internal/<name>/`, which you define in markdown. See the [Yami README](https://github.com/nathanaday/yami#bring-your-own-skills). |
 
 The agents use your own Claude Code and Codex setup: your instructions, skills, plugins, MCP servers, and permission rules. In a session, the agent gets the wiki tools (`wiki_search`, `wiki_match`, `wiki_citations`, `wiki_change`, …) and the wiki skills (`/wiki:ingest`, `/wiki:checkout`, `/wiki:verify`, …).
 
@@ -51,12 +51,13 @@ The agents use your own Claude Code and Codex setup: your instructions, skills, 
 | Setting | What it does |
 | --- | --- |
 | **Embeddings** | Off: search ranks by words. **Ollama on this computer**: search also ranks by meaning, with a model Ollama runs on your machine; install [Ollama](https://ollama.com), run `ollama pull nomic-embed-text`, and choose it. **Voyage AI, with a key**: the same through Voyage AI, which gets the text of your notes. The address, the model, and the key have fields of their own. A change takes effect at the next search; the first search embeds every note, which takes a moment. |
+| **Folders** | Where the wiki is (default `wiki`), and where the modules keep what they need (default `internal`). Type another folder, such as `library/wiki`, and choose **Move the folders**: the folders move with every link into them, and you reload Obsidian. A folder whose name starts with a dot is refused, because Obsidian hides it, and its notes and links would stop working. The choice is kept in `.yami.json` at the vault's root, so Duet, Yami Threads, and the Yami Wiki plugin for Claude Code and Codex use the same folders. A change plan that waits for approval holds the wiki in place until you approve or reject it. |
 
 ## What it adds to your vault
 
-- **Folders.** `wiki/topics/` and `wiki/sources/`, the knowledge base, which you read. `internal/wiki/` holds the module's document, its ledger (`sessions.base`), its policies, promises, skills, and agents, its sessions, its change documents, its snapshots, and the frozen copies of the sources. `conversations/` holds the conversation note of each run.
-- **Files.** `Yami.base`, a base that lists the modules and their sessions, and `internal/yami/skills/run/SKILL.md`, the base skill of every run. A file that you edited is never overwritten.
-- **Folder colors.** `wiki/` is cyan in the file explorer, `internal/` is gray.
+- **Folders.** `wiki/topics/` and `wiki/sources/`, the knowledge base, which you read. `internal/wiki/` holds the module's document, its ledger (`sessions.base`), its policies, promises, skills, and agents, its sessions, its change documents, its snapshots, and the frozen copies of the sources. `conversations/` holds the conversation note of each run. These are the default folders; the **Folders** setting moves the first two.
+- **Files.** `internal/yami/skills/run/SKILL.md`, the base skill of every run. A file that you edited is never overwritten. Nothing is written at the vault's root, except `.yami.json` once you move a folder.
+- **Folder colors.** The wiki's folder is cyan in the file explorer, the internal folder gray.
 - **A status bar item** that says which agents work.
 
 ## With Duet and Yami Threads

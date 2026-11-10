@@ -1,8 +1,11 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { BASE_SKILL, BASE_SKILL_TEXT, VERSION } from "yami";
+import { BASE_SKILL_TEXT, baseSkill, VERSION } from "yami";
+import { DEFAULT_FOLDERS } from "yami/document";
 import { launchObsidian, type ObsidianInstance } from "./harness.js";
+
+const BASE_SKILL = baseSkill(DEFAULT_FOLDERS);
 
 const TIMEOUT = 240_000;
 const HELLO = "test/fixtures/vault-modules/hello";
@@ -404,9 +407,9 @@ describe("Yami Wiki in Obsidian", () => {
   });
 
   it("creates the hello module with New module, and the panel shows it with no reload", { timeout: 60_000 }, async () => {
-    await obsidian.waitForNote("Yami.base", (text) => text.length > 0, 10_000);
-    // A file at the vault root has no folder to create. A slice to the last slash once made "Yami.bas".
-    expect(existsSync(path.join(obsidian.vault, "Yami.bas"))).toBe(false);
+    await obsidian.waitForNote("internal/wiki/wiki.md", (text) => text.length > 0, 10_000);
+    // Nothing of Yami's is written at the vault's root.
+    expect(existsSync(path.join(obsidian.vault, "Yami.base"))).toBe(false);
     await run("yami-wiki:open-panel");
     await page().waitForSelector('.yami-panel [data-key="module:wiki"]');
     expect(await page().$('.yami-panel [data-key="module:hello"]')).toBeNull();
