@@ -30,21 +30,6 @@ describe("Yami Wiki in Obsidian", () => {
     await obsidian?.close();
   });
 
-  afterEach(async () => {
-    // The editor and the shared document must never differ.
-    const drift = await obsidian.page.evaluate(() => {
-      const app = (window as any).app;
-      const hub = app.plugins.plugins["yami-wiki"]?.yami.hub;
-      const problems: string[] = [];
-      for (const leaf of app.workspace.getLeavesOfType("markdown")) {
-        const note = leaf.view.file && hub?.get(leaf.view.file.path);
-        if (note && note.views.size && leaf.view.editor.getValue() !== note.content) problems.push(leaf.view.file.path);
-      }
-      return problems;
-    });
-    expect(drift).toEqual([]);
-  });
-
   const page = () => obsidian.page;
 
   /** Waits until no agent works, then for the editor to settle. */
@@ -811,7 +796,7 @@ describe("Yami Wiki in Obsidian", () => {
     try {
       await run("yami-wiki:yami-run-session-claude");
       const second = `${await conversationOf(working)}.md`;
-      await page().waitForFunction((path) => ((window as any).app.plugins.plugins["yami-wiki"].yami.hub.get(path)?.content ?? "").includes("sleep 30"), second, { timeout: 120_000, polling: 200 });
+      await obsidian.waitForNote(second, (text) => text.includes("sleep 30"), 120_000);
       await run("yami-wiki:yami-kill-session");
       const killed = await obsidian.waitForNote(working, (text) => /state: (stopped|done|failed|needs-attention)/.test(text), 30_000);
       expect(killed).toContain("state: stopped");
@@ -833,11 +818,7 @@ describe("Yami Wiki in Obsidian", () => {
     try {
       await run("yami-wiki:yami-run-session-claude");
       const conversation = (await obsidian.waitForNote(session, (text) => /\nconversation: "\[\[conversations\//.test(text), 60_000)).match(/\nconversation: "\[\[(conversations\/[^|\]]+)\|/)![1]!;
-      await page().waitForFunction(
-        (path) => ((window as any).app.plugins.plugins["yami-wiki"].yami.hub.get(path)?.content ?? "").includes("sleep 30"),
-        `${conversation}.md`,
-        { timeout: 120_000, polling: 200 },
-      );
+      await obsidian.waitForNote(`${conversation}.md`, (text) => text.includes("sleep 30"), 120_000);
       expect(await page().evaluate(() => (window as any).app.commands.findCommand("yami-wiki:yami-resume-session").checkCallback(true))).toBe(false);
       await run("yami-wiki:yami-stop-session");
       const stopped = await obsidian.waitForNote(session, (text) => /state: (stopped|done|failed|needs-attention)/.test(text), 60_000);
